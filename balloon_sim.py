@@ -1,8 +1,16 @@
 from astral import Location
 from collections import namedtuple
+from flask import Flask
 import datetime
 import requests
 import xml.etree.ElementTree as ET
+import re
+import psycopg2
+
+
+app = Flask(__name__)
+app.config['SQALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URI']
+db = SQLAlchemy(app)
 
 Locale = namedtuple('Locale', 'name, region, latitude, longitude, tz_name, elevation')
 
@@ -44,9 +52,21 @@ def get_landing_site(kml):
         document = root.find('kml:Document', ns)
         for place in document.findall('kml:Placemark', ns):
             if place.find('kml:Name', ns).text == 'Predicted Balloon Landing':
-                return place.find('kml:Point', ns).find('kml:coordinates', ns).text
+                time_date = re.compile('(\d{2}:\d{2}).((\d{2}/){2}\d{4})')
+                land_text = place.find('kml:description', ns).text
+                land_time = time_date.search(land_text)
+                land_time = land_time.string[land_time.start():land_time.end()]
+                dtformat = '%H:%M %d/%m/%Y'
+                landing_time = datetime.datetime.strptime(land_time, dtformat)
+                land_coord = place.find('kml:Point', ns).find('kml:coordinates', ns).text
+                return land_coord, landing_time
     except AttributeError:
         pass
 
 
+@app.route('/')
 
+
+if __name__ == '__main__':
+    app.debug = True
+    app.run()

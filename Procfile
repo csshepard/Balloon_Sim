@@ -1,1 +1,1 @@
-web: gunicorn balloon_sim:app --log-file=-
+web: gunicorn app:app --log-file=-

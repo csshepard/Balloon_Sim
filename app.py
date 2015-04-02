@@ -1,7 +1,8 @@
+import os
 from astral import Location
 from collections import namedtuple
 from flask import Flask
-from flask.ext.SQLAlchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 import datetime
 import requests
 import xml.etree.ElementTree as ET
@@ -9,7 +10,7 @@ import re
 
 
 app = Flask(__name__)
-app.config['SQALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URI']
+app.config['SQALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
 
 

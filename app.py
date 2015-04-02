@@ -1,12 +1,11 @@
 from astral import Location
 from collections import namedtuple
 from flask import Flask
-from flask.ext.SQLAlchemy
+from flask.ext.SQLAlchemy import SQLAlchemy
 import datetime
 import requests
 import xml.etree.ElementTree as ET
 import re
-import psycopg2
 
 
 app = Flask(__name__)

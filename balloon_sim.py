@@ -1,6 +1,7 @@
 from astral import Location
 from collections import namedtuple
 from flask import Flask
+from flask.ext.SQLAlchemy
 import datetime
 import requests
 import xml.etree.ElementTree as ET
@@ -11,6 +12,32 @@ import psycopg2
 app = Flask(__name__)
 app.config['SQALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URI']
 db = SQLAlchemy(app)
+
+
+class Simulation(db.Model):
+    uuid = db.Column(db.String(50), primary_key=True)
+    site_id = db.Column(db.Integer, db.ForeignKey('LandingSite.id'))
+    launch_date = db.Column(db.DateTime)
+    create_date = db.Column(db.DateTime)
+    kml_file = db.Column(db.Text)
+    landing_site = db.relationship('LandingSite', uselist=False, backref='simulation')
+
+
+class LaunchSite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    elevation = db.Column(db.Integer)
+    simulations = db.relationship('Simulation', backref='launch_site')
+
+
+class LandingSite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String(50), db.ForeignKey('Simulation.uuid'))
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+
 
 Locale = namedtuple('Locale', 'name, region, latitude, longitude, tz_name, elevation')
 

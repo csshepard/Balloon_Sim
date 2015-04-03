@@ -16,7 +16,7 @@ db = SQLAlchemy(app)
 
 class Simulation(db.Model):
     uuid = db.Column(db.String(50), primary_key=True)
-    site_id = db.Column(db.Integer, db.ForeignKey('landing_site.id'))
+    site_id = db.Column(db.Integer, db.ForeignKey('launch_site.id'))
     launch_date = db.Column(db.DateTime)
     create_date = db.Column(db.DateTime)
     kml_file = db.Column(db.Text)

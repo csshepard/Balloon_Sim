@@ -20,7 +20,7 @@ class Simulation(db.Model):
     launch_date = db.Column(db.DateTime)
     create_date = db.Column(db.DateTime)
     kml_file = db.Column(db.Text)
-    landing_site = db.relationship('landing_site', uselist=False, backref='simulation')
+    landing_site = db.relationship('LandingSite', uselist=False, backref='simulation')
 
     def __init__(self, uuid, site_id, launch_date, create_date, kml_file):
         self.uuid = uuid
@@ -36,7 +36,7 @@ class LaunchSite(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     elevation = db.Column(db.Integer)
-    simulations = db.relationship('simulation', backref='launch_site')
+    simulations = db.relationship('Simulation', backref='launch_site')
 
     def __init__(self, name, latitude, longitude, elevation):
         self.name = name

@@ -22,6 +22,13 @@ class Simulation(db.Model):
     kml_file = db.Column(db.Text)
     landing_site = db.relationship('landing_site', uselist=False, backref='simulation')
 
+    def __init__(self, uuid, site_id, launch_date, create_date, kml_file):
+        self.uuid = uuid
+        self.site_id = site_id
+        self.launch_date = launch_date
+        self.create_date = create_date
+        self.kml_file = kml_file
+
 
 class LaunchSite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -31,6 +38,12 @@ class LaunchSite(db.Model):
     elevation = db.Column(db.Integer)
     simulations = db.relationship('simulation', backref='launch_site')
 
+    def __init__(self, name, latitude, longitude, elevation):
+        self.name = name
+        self.latitude = latitude
+        self.longitude = longitude
+        self.elevation = elevation
+
 
 class LandingSite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,13 +51,20 @@ class LandingSite(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
 
+    def __init__(self, uuid, latitude, longitude):
+        self.uuid = uuid
+        self.latitude = latitude
+        self.longitude = longitude
+
 
 Locale = namedtuple('Locale', 'name, region, latitude, longitude, tz_name, elevation')
 
 raylen = Locale('RayLen', 'US', 35.970950, -80.505930, 'America/New_York', 238)
 pilot_mountain = Locale('Pilot Mtn', 'US', 36.340489, -80.480438, 'America/New_York', 673)
 LOCATIONS = [raylen, pilot_mountain]
-ASCENT_RATE =
+ASCENT_RATE = 2.92
+BURST_ALTITUDE = 33000
+DRAG = 4.572
 
 def get_sunrise(place, date):
     return Location(place).sunrise(date=date, local=False)
@@ -102,9 +122,11 @@ def home():
 
 @app.route('/run_sim/<date>')
 def run_sim(date):
-    for site in locations:
-        uuid = get_uuid(place, date, )
-
+    for site in LOCATIONS:
+        launch_datetime = get_sunrise(site, datetime.datetime.strptime(date, '%d-%m-%Y'))
+        uuid = get_uuid(site, launch_datetime, ASCENT_RATE, BURST_ALTITUDE, DRAG)
+        kml = get_kml(uuid)
+        landing_site, landing_time = get_landing_site(kml)
 
 
 if __name__ == '__main__':

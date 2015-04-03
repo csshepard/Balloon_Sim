@@ -41,6 +41,10 @@ class LandingSite(db.Model):
 
 Locale = namedtuple('Locale', 'name, region, latitude, longitude, tz_name, elevation')
 
+raylen = Locale('RayLen', 'US', 35.970950, -80.505930, 'America/New_York', 238)
+pilot_mountain = Locale('Pilot Mtn', 'US', 36.340489, -80.480438, 'America/New_York', 673)
+LOCATIONS = [raylen, pilot_mountain]
+ASCENT_RATE =
 
 def get_sunrise(place, date):
     return Location(place).sunrise(date=date, local=False)
@@ -89,6 +93,18 @@ def get_landing_site(kml):
                 return land_coord, landing_time
     except AttributeError:
         pass
+
+
+@app.route('/')
+def home():
+    return 'Hello World'
+
+
+@app.route('/run_sim/<date>')
+def run_sim(date):
+    for site in locations:
+        uuid = get_uuid(place, date, )
+
 
 
 if __name__ == '__main__':

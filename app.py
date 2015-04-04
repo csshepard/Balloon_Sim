@@ -116,7 +116,7 @@ def home():
     return 'Hello World'
 
 
-@app.route('/run_sim/<date>')
+@app.route('/run-sim/<date>')
 def run_sim(date):
     for site in LOCATIONS:
         site_row = LaunchSite.query.filter_by(name=site.name).one()
@@ -128,21 +128,21 @@ def run_sim(date):
             landing_coords = landing_site.split(',')
             sim = Simulation(uuid_data['uuid'], site_row.id, launch_datetime,
                              datetime.date.today(), kml)
-            if Simulation.query.filter_by(uuid=uuid_data['uuid']) is None:
+            if Simulation.query.filter_by(uuid=uuid_data['uuid']).count() == 0:
                 db.session.add(sim)
                 l_site = LandingSite(uuid_data['uuid'], landing_coords[1], landing_coords[0])
                 db.session.add(l_site)
                 db.session.commit()
-            return redirect('/view_sim/%s' % date)
+            return redirect('/view-sim/%s' % date)
         else:
             return uuid_data['error']
 
 
-@app.route('/view_sim/<date>')
+@app.route('/view-sim/<date>')
 def view_sim(date):
     date_split = date.split('-')
     launch_date = datetime.date(int(date_split[2]), int(date_split[1]), int(date_split[0]))
-    sims = Simulation.query.filter_by(launch_date=launch_date)
+    sims = Simulation.query.filter(Simulation.launch_date > launch_date).filter(Simulation.launch_date < launch_date + datetime.timedelta(days=1))
     return render_template('view_sim.html', sims=sims)
 
 

@@ -171,9 +171,12 @@ def view_sim(date):
     return render_template('view-sim.html', sims=sims)
 
 
-@app.route('/kml/<uuid>')
-def return_kml(uuid):
-    file = Simulation.query.filter_by(uuid=uuid).one().kml_file
+@app.route('/kml/<uuid_date>')
+def return_kml(uuid_date):
+    uuid, date = uuid_date.split('+')
+    date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    file = Simulation.query.filter_by(uuid=uuid).\
+        filter_by(create_date=date).one().kml_file
     return file
 
 

@@ -16,7 +16,7 @@ function initialize() {
   var map{{sim.uuid}} = new google.maps.Map(document.getElementById('map-canvas{{sim.uuid}}'), mapOptions{{sim.uuid}});
 
   var ctaLayer = new google.maps.KmlLayer({
-    url: 'http://near-space-circus.heroku.com/kml/{{sim.uuid}}'
+    url: 'http://near-space-circus.heroku.com/kml/{{sim.uuid}}+{{sim.create_date}}'
   });
   ctaLayer.setMap(map{{sim.uuid}});
   {% endfor %}

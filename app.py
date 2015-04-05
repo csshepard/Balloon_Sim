@@ -129,7 +129,7 @@ def run_simulation(date):
                              ASCENT_RATE, BURST_ALTITUDE, DRAG)
         if uuid_data['valid'] == 'true':
             if Simulation.query.filter_by(uuid=uuid_data['uuid']).\
-                filer_by(create_date=datetime.date.today()).first() is None:
+                    filter_by(create_date=datetime.date.today()).first() is None:
                 kml = get_kml(uuid_data['uuid'])
                 landing_site = get_landing_site(kml)
                 landing_coords = landing_site.split(',')

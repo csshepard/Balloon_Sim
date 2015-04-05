@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>View Landing Sites</title>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyBk_3hOHALHmbcsuYIibd17UfivgQArbXs"></script>
+    <script>
+function initialize() {
+  var mapOptions = {
+    zoom: 7,
+    center: new google.maps.LatLng(35.970950, -80.505930)
+  }
+
+  var mapRayLen = new google.maps.Map(document.getElementById('map-canvas1'), mapOptions);
+  var mapPilotMtn = new google.maps.Map(document.getElementById('map-canvas2'), mapOptions);
+  {% for point in landingsites %}
+  var marker{{point.id}} = new google.maps.Marker({
+      position: new google.maps.LatLng({{point.latitude}}, {{point.longitude}}),
+      map: map{{point.name|replace(" ", "")}},
+      title: 'Landing Site #{{point.id}}'
+  });
+  {% endfor %}
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <p>Landing sites for RayLen
+    <div id="map-canvas1" style="height:300px; width:400px"></div></p>
+    <p>Landing sites for Pilot Mountain
+    <div id="map-canvas2" style="height:300px; width:400px"</div></p>
+  </body>
+</html>
+
+

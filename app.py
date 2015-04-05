@@ -15,7 +15,7 @@ app.debug = True
 
 
 class Simulation(db.Model):
-    id = db.Column(db.Integer, primary_key=True
+    id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(50))
     site_id = db.Column(db.Integer, db.ForeignKey('launch_site.id'))
     launch_date = db.Column(db.DateTime)

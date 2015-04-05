@@ -15,7 +15,8 @@ app.debug = True
 
 
 class Simulation(db.Model):
-    uuid = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True
+    uuid = db.Column(db.String(50))
     site_id = db.Column(db.Integer, db.ForeignKey('launch_site.id'))
     launch_date = db.Column(db.DateTime)
     create_date = db.Column(db.Date)
@@ -49,14 +50,16 @@ class LaunchSite(db.Model):
 
 class LandingSite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(50), db.ForeignKey('simulation.uuid'))
+    uuid = db.Column(db.String(50))
+    sim_id = db.Column(db.Integer, db.ForeignKey('simulation.id'))
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
 
-    def __init__(self, uuid, latitude, longitude):
+    def __init__(self, uuid, latitude, longitude, sim_id):
         self.uuid = uuid
         self.latitude = latitude
         self.longitude = longitude
+        self.sim_id = sim_id
 
 
 Locale = namedtuple('Locale',
@@ -125,7 +128,8 @@ def run_simulation(date):
         uuid_data = get_uuid(site, launch_datetime,
                              ASCENT_RATE, BURST_ALTITUDE, DRAG)
         if uuid_data['valid'] == 'true':
-            if Simulation.query.filter_by(uuid=uuid_data['uuid']).first() is None:
+            if Simulation.query.filter_by(uuid=uuid_data['uuid']).\
+                filer_by(create_date=datetime.date.today()).first() is None:
                 kml = get_kml(uuid_data['uuid'])
                 landing_site = get_landing_site(kml)
                 landing_coords = landing_site.split(',')
@@ -133,7 +137,8 @@ def run_simulation(date):
                                  launch_datetime, datetime.date.today(), kml)
                 db.session.add(sim)
                 l_site = LandingSite(uuid_data['uuid'],
-                                     landing_coords[1], landing_coords[0])
+                                     landing_coords[1], landing_coords[0],
+                                     sim.id)
                 db.session.add(l_site)
                 db.session.commit()
         else:

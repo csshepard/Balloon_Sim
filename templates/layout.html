@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  {% block head %}
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Near Space Circus Simulations</title>
+  {% endblock %}
+    <style>
+      {% block style %}
+      {% endblock %}
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyBk_3hOHALHmbcsuYIibd17UfivgQArbXs"></script>
+    <script>
+      {% block script %}
+      {% endblock %}
+    </script>
+  </head>
+  <body>
+  {% block body %}{% endblock %}
+  </body>
+</html>

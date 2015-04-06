@@ -1,8 +1,9 @@
 import os
 from astral import Location
 from collections import namedtuple
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.exc import NoResultFound
 import datetime
 import requests
 import xml.etree.ElementTree as et
@@ -75,6 +76,7 @@ LOCATIONS = [raylen, pilot_mountain]
 ASCENT_RATE = 2.92
 BURST_ALTITUDE = 33000
 DRAG = 4.572
+
 
 def get_sunrise(place, date):
     return Location(place).sunrise(date=date, local=False)
@@ -155,7 +157,7 @@ def home():
 def run_sim(date):
     r_value = run_simulation(date)
     if r_value is None:
-        return redirect('/view-sim/%s' % date)
+        return redirect(url_for('view_sim', date=date))
     else:
         return r_value
 
@@ -171,12 +173,9 @@ def view_sim(date):
     return render_template('view-sim.html', sims=sims)
 
 
-@app.route('/kml/<uuid_date>')
-def return_kml(uuid_date):
-    uuid, date = uuid_date.split('+')
-    date = datetime.datetime.strptime(date, '%Y-%m-%d')
-    file = Simulation.query.filter_by(uuid=uuid).\
-        filter_by(create_date=date).one().kml_file
+@app.route('/kml/<id>')
+def return_kml(id):
+    file = Simulation.query.filter_by(id=id).first_or_404().kml_file
     return file
 
 
@@ -189,17 +188,19 @@ def auto_sim():
         if r_value is not None:
             return r_value
         start_date += datetime.timedelta(days=1)
-    return redirect('/')
+    return redirect(url_for('home'))
 
 
 @app.route('/landing-sites')
 def landing_sites():
     land_points = db.session.query(LandingSite.id, LandingSite.latitude,
-                                   LandingSite.longitude, LaunchSite.name).\
+                                   LandingSite.longitude, LaunchSite.name,
+                                   Simulation.launch_date,
+                                   Simulation.site_id).\
         join(Simulation, LandingSite.uuid == Simulation.uuid).\
         join(LaunchSite, Simulation.site_id == LaunchSite.id)
-    return render_template('landing-sites.html', landingsites=land_points)
-
+    launch_sites = db.session.query(LaunchSite.id, LaunchSite.name).distinct().order_by(LaunchSite.id)
+    return render_template('landing-sites.html', landingsites=land_points, launchsites=launch_sites)
 
 
 if __name__ == '__main__':

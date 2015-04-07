@@ -13,7 +13,7 @@ import xml.etree.ElementTree as et
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
-
+app.debug = True
 
 class Simulation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -144,6 +144,7 @@ def run_simulation(date):
                 sim = Simulation(uuid_data['uuid'], site_row.id,
                                  launch_datetime, datetime.date.today(), kml)
                 db.session.add(sim)
+                db.session.flush()
                 l_site = LandingSite(uuid_data['uuid'],
                                      landing_coords[1], landing_coords[0],
                                      sim.id)
@@ -225,7 +226,7 @@ def landing_sites():
                                    LandingSite.longitude, LaunchSite.name,
                                    Simulation.launch_date,
                                    Simulation.site_id).\
-        join(Simulation, LandingSite.uuid == Simulation.uuid).\
+        join(Simulation, LandingSite.sim_id == Simulation.id).\
         join(LaunchSite, Simulation.site_id == LaunchSite.id)
     lp_sub = land_points.subquery()
     avgs = db.session.query(lp_sub.c.site_id.label('id'),

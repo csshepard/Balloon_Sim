@@ -4,6 +4,7 @@ from collections import namedtuple
 from flask import Flask, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import cast, desc
 import datetime
 import requests
 import xml.etree.ElementTree as et
@@ -112,7 +113,10 @@ def get_kml(uuid):
 
 def get_landing_site(kml):
     ns = {'kml': "http://www.opengis.net/kml/2.2"}
-    root = et.fromstring(kml)
+    try:
+        root = et.fromstring(kml)
+    except et.ParseError:
+        return
     document = root.find('kml:Document', ns)
     for place in document.findall('kml:Placemark', ns):
         if place.find('kml:name', ns).text == 'Predicted Balloon Landing':
@@ -134,6 +138,8 @@ def run_simulation(date):
                     filter_by(create_date=datetime.date.today()).first() is None:
                 kml = get_kml(uuid_data['uuid'])
                 landing_site = get_landing_site(kml)
+                if landing_site is None:
+                    continue
                 landing_coords = landing_site.split(',')
                 sim = Simulation(uuid_data['uuid'], site_row.id,
                                  launch_datetime, datetime.date.today(), kml)
@@ -147,10 +153,24 @@ def run_simulation(date):
             return uuid_data['error']
 
 
+def get_navigation_rows():
+    locations = db.session.query(LaunchSite.id, LaunchSite.name).distinct().order_by(LaunchSite.name)
+    dt = cast(Simulation.launch_date, db.Date)
+    sims = db.session.query(dt).group_by(dt).order_by(desc(dt))
+    return locations, sims
+
+
 @app.route('/')
-def home():
-    sims = Simulation.query.order_by(Simulation.launch_date)
-    return render_template('home.html', sims=sims)
+def index():
+    nav_locations, nav_sims = get_navigation_rows()
+    return render_template('index.html', nav_locations=nav_locations, nav_sims=nav_sims)
+
+
+@app.route('/view-all')
+def view_all():
+    sims = Simulation.query.order_by(Simulation.launch_date.desc())
+    nav_locations, nav_sims = get_navigation_rows()
+    return render_template('view-all.html', nav_locations=nav_locations, nav_sims=nav_sims, sims=sims)
 
 
 @app.route('/run-sim/<date>')
@@ -162,15 +182,23 @@ def run_sim(date):
         return r_value
 
 
-@app.route('/view-sim/<date>')
-def view_sim(date):
+@app.route('/view-sim/d/<date>')
+def view_sims_by_date(date):
     date_split = date.split('-')
-    launch_date = datetime.date(int(date_split[2]), int(date_split[1]),
-                                int(date_split[0]))
+    launch_date = datetime.date(int(date_split[0]), int(date_split[1]),
+                                int(date_split[2]))
     sims = Simulation.query.filter(Simulation.launch_date > launch_date).\
         filter(Simulation.launch_date <
-               launch_date + datetime.timedelta(days=1))
-    return render_template('view-sim.html', sims=sims)
+               launch_date + datetime.timedelta(days=1)).order_by(desc(Simulation.launch_date))
+    nav_locations, nav_sims = get_navigation_rows()
+    return render_template('view-sim.html', nav_locations=nav_locations, nav_sims=nav_sims, sims=sims)
+
+
+@app.route('/view-sim/l/<site_id>')
+def view_sims_by_launch(site_id):
+    sims = Simulation.query.filter_by(site_id=site_id).order_by(desc(Simulation.launch_date))
+    nav_locations, nav_sims = get_navigation_rows()
+    return render_template('view-sim.html', nav_locations=nav_locations, nav_sims=nav_sims, sims=sims)
 
 
 @app.route('/kml/<id>')
@@ -188,7 +216,7 @@ def auto_sim():
         if r_value is not None:
             return r_value
         start_date += datetime.timedelta(days=1)
-    return redirect(url_for('home'))
+    return redirect(url_for('index'))
 
 
 @app.route('/landing-sites')
@@ -199,8 +227,9 @@ def landing_sites():
                                    Simulation.site_id).\
         join(Simulation, LandingSite.uuid == Simulation.uuid).\
         join(LaunchSite, Simulation.site_id == LaunchSite.id)
-    launch_sites = db.session.query(LaunchSite.id, LaunchSite.name).distinct().order_by(LaunchSite.id)
-    return render_template('landing-sites.html', landingsites=land_points, launchsites=launch_sites)
+    nav_locations, nav_sims = get_navigation_rows()
+    return render_template('landing-sites.html', nav_locations=nav_locations,
+                           nav_sims=nav_sims, landingsites=land_points)
 
 
 if __name__ == '__main__':

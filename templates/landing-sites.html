@@ -5,7 +5,7 @@
     zoom: 7,
     center: new google.maps.LatLng(35.773833, -78.054262)
     }
-    {% for site in launchsites %}
+    {% for site in nav_locations %}
       var map{{site.id}} = new google.maps.Map(document.getElementById('map-canvas{{site.id}}'), mapOptions);
     {% endfor %}
     {% for point in landingsites %}
@@ -19,9 +19,10 @@
   google.maps.event.addDomListener(window, 'load', initialize);
 {% endblock %}
 {% block body %}
-  {% for site in launchsites %}
-    <p>Landing sites for {{ site.name }}
-    <div id="map-canvas{{ site.id }}" style="height:300px; width:400px"></div>
-    </p}
+  {% for site in nav_locations %}
+    <div id="map">
+      Landing sites for {{ site.name }}<br>
+      <div id="map-canvas{{ site.id }}" style="height:300px; width:400px; z:index:-1; margin: 0 auto;"></div>
+    </div>
   {% endfor %}
 {% endblock %}

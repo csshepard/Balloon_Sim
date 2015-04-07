@@ -39,17 +39,11 @@
 {% block body %}
   <div id="loading"></div>
   <div id="content">
-    <p><h3>Simulations created using <a href="http://predict.habhub.org">predict.habhub.org</a> with the following variables:</h3>
-      <h5><ul style="list-style-type:None">
-        <li>Ascent Rate: 2.92 m/s</li>
-        <li>Burst Altitude: 33000 m</li>
-        <li>Drag: 4.572 m/s</li>
-      </ul></h5>
-    </p>
     {% for sim in sims %}
-      <p><h4>Simulation Created {{sim.create_date}} for {{sim.launch_site.name}} on {{sim.launch_date}} UTC Launch</h4>
+      <div id="map">
+        <h4>Simulation Created {{sim.create_date}} for {{sim.launch_site.name}} on {{sim.launch_date}} UTC Launch</h4>
         <div id="map-canvas{{sim.id}}" style="height:300px; width:400px"></div>
-      </p>
+      </div>
     {% endfor %}
   </div>
 {% endblock %}

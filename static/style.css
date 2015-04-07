@@ -1,0 +1,102 @@
+header {
+  background-color:#0562c1;
+  color:black;
+  text-align:center;
+  padding:5px;
+}
+
+nav {
+  background-color:#f49102;
+  height:100%;
+  width:15%;
+  float:left;
+  padding:5px;
+  list-style-type:none;
+}
+
+nav ul {
+  float: left;
+  font-size: 17px;
+  margin: none;
+  padding: 5px;
+  list-style-type: none;
+}
+
+nav ul ul{
+  display: none;
+  z-index: 1;
+}
+
+nav li {
+  width:100%;
+  padding: 5px;
+}
+
+nav a:link {
+  text-decoration: none;
+  color: #39363d;
+}
+
+nav a:visited {
+  text-decoration: none;
+  color: #39363d;
+}
+
+nav li:hover {
+  background-color: #3078c1;
+  border-radius: 5px;
+}
+
+nav ul li {
+ position: relative;
+ width: 115px
+}
+
+nav ul li:hover > ul{
+  position:absolute;
+  display:block;
+  top: 0;
+  left: 100%;
+  background: #0053a8;
+  border-radius: 5px;
+  list-style-type: none;
+}
+
+section {
+  margin-left: 15%;
+  padding:10px;
+}
+
+#map {
+  float: left;
+  width: 425pxx;
+  height: 325px;
+  text-align: center;
+  margin: 0 auto;
+  border: 2px;
+  padding: 15px;
+  z-index: -1;
+}
+
+footer {
+  background-color:black;
+  color:white;
+  clear:both;
+  text-align:center;
+  padding:5px;
+}
+
+div#content {
+  display: none;
+}
+
+div#loading {
+  top: 200 px;
+  margin: auto;
+  position: absolute;
+  z-index: 1000;
+  width: 160px;
+  height: 24px;
+  background: url("loadingimage.gif") no-repeat;
+  cursor: wait;
+}

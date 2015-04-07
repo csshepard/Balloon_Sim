@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   {% block head %}
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <title>Near Space Circus Simulations</title>
+    <title>Near Space Circus</title>
   {% endblock %}
     <style>
       {% block style %}
@@ -17,6 +18,35 @@
     </script>
   </head>
   <body>
-  {% block body %}{% endblock %}
+    <header>
+      <h1>Near Space Circus Simulations</h1>
+    </header>
+    <nav>
+      <ul>
+	    <li><a href="{{ url_for('index') }}">Home</a></li>
+	    <li><a href="#">View Simulations</a>
+	      <ul>
+		    <li><a href="#">Launch Site</a>
+              <ul>
+                {% for location in nav_locations %}
+			      <li><a href="{{ url_for('view_sims_by_launch', site_id=location.id) }}">{{ location.name }}</a></li>
+                {% endfor %}
+			  </ul>
+		    </li>
+		    <li><a href="#">Launch Date</a>
+		      <ul>
+                {% for sim in nav_sims %}
+			    <li><a href="{{ url_for('view_sims_by_date', date = sim[0]) }}">{{ sim[0].strftime('%d %b, %Y') }}</a></li>
+                {% endfor %}
+			  </ul>
+		    </li>
+		  </ul></li>
+        <li><a href="{{ url_for('view_all') }}">View All Simulations</a></li>
+        <li><a href="{{ url_for('landing_sites') }}"> View Landing Sites</a></li></ul>
+	  <a href="{{ url_for('auto_sim') }}"><button type="button" onclick="alert('Running Simulations')">Run Simulations</button></a>
+    </nav>
+    <section>
+      {% block body %}{% endblock %}
+    </section>
   </body>
 </html>

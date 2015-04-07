@@ -13,7 +13,6 @@ import xml.etree.ElementTree as et
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
-app.debug = True
 
 
 class Simulation(db.Model):
@@ -130,7 +129,7 @@ def run_simulation(date):
     for site in LOCATIONS:
         site_row = LaunchSite.query.filter_by(name=site.name).one()
         if type(date) == str:
-            date = datetime.datetime.strptime(date, '%d-%m-%Y')
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
         launch_datetime = get_sunrise(site, date)
         uuid_data = get_uuid(site, launch_datetime,
                              ASCENT_RATE, BURST_ALTITUDE, DRAG)
@@ -179,7 +178,7 @@ def run_sim(date):
     r_value = run_simulation(date)
     if r_value is type(str):
         return r_value
-    return url_for('view_sims_by_date', date=date)
+    return redirect(url_for('view_sims_by_date', date=date))
 
 
 @app.route('/view-sim/d/<date>')

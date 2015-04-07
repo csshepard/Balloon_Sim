@@ -1,9 +1,8 @@
 import os
 from astral import Location
 from collections import namedtuple
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import cast, desc, func
 import datetime
 import requests
@@ -13,7 +12,6 @@ import xml.etree.ElementTree as et
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
-app.debug = True
 
 class Simulation(db.Model):
     id = db.Column(db.Integer, primary_key=True)

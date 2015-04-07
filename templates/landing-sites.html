@@ -1,12 +1,12 @@
 {% extends 'layout.html' %}
 {% block script %}
   function initialize() {
-    var mapOptions = {
-    zoom: 7,
-    center: new google.maps.LatLng(35.773833, -78.054262)
+    {% for site in avgs %}
+    var mapOptions{{site.id}} = {
+    zoom: 6,
+    center: new google.maps.LatLng({{ site.lat }}, {{ site.long }})
     }
-    {% for site in nav_locations %}
-      var map{{site.id}} = new google.maps.Map(document.getElementById('map-canvas{{site.id}}'), mapOptions);
+      var map{{site.id}} = new google.maps.Map(document.getElementById('map-canvas{{site.id}}'), mapOptions{{site.id}});
     {% endfor %}
     {% for point in landingsites %}
       var marker{{point.id}} = new google.maps.Marker({

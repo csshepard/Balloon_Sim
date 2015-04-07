@@ -1,10 +1,10 @@
 import os
 from astral import Location
 from collections import namedtuple
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy import cast, desc
+from sqlalchemy import cast, desc, func
 import datetime
 import requests
 import xml.etree.ElementTree as et
@@ -126,6 +126,7 @@ def get_landing_site(kml):
 
 
 def run_simulation(date):
+    sim_count=0
     for site in LOCATIONS:
         site_row = LaunchSite.query.filter_by(name=site.name).one()
         if type(date) == str:
@@ -148,57 +149,55 @@ def run_simulation(date):
                                      landing_coords[1], landing_coords[0],
                                      sim.id)
                 db.session.add(l_site)
-                db.session.commit()
+                sim_count += 1
         else:
             return uuid_data['error']
+    db.session.commit()
+    return sim_count
 
-
+@app.context_processor
 def get_navigation_rows():
     locations = db.session.query(LaunchSite.id, LaunchSite.name).distinct().order_by(LaunchSite.name)
     dt = cast(Simulation.launch_date, db.Date)
     sims = db.session.query(dt).group_by(dt).order_by(desc(dt))
-    return locations, sims
+    return dict(nav_locations=locations, nav_sims=sims)
 
 
 @app.route('/')
 def index():
-    nav_locations, nav_sims = get_navigation_rows()
-    return render_template('index.html', nav_locations=nav_locations, nav_sims=nav_sims)
+    return render_template('index.html')
 
 
 @app.route('/view-all')
 def view_all():
     sims = Simulation.query.order_by(Simulation.launch_date.desc())
-    nav_locations, nav_sims = get_navigation_rows()
-    return render_template('view-all.html', nav_locations=nav_locations, nav_sims=nav_sims, sims=sims)
+    return render_template('view-all.html', sims=sims)
 
 
 @app.route('/run-sim/<date>')
 def run_sim(date):
     r_value = run_simulation(date)
-    if r_value is None:
-        return redirect(url_for('view_sim', date=date))
-    else:
+    if r_value is type(str):
         return r_value
+    return url_for('view_sims_by_date', date=date)
 
 
 @app.route('/view-sim/d/<date>')
 def view_sims_by_date(date):
-    date_split = date.split('-')
-    launch_date = datetime.date(int(date_split[0]), int(date_split[1]),
-                                int(date_split[2]))
-    sims = Simulation.query.filter(Simulation.launch_date > launch_date).\
+    if type(date) is str:
+        date_split = date.split('-')
+        date = datetime.date(int(date_split[0]), int(date_split[1]),
+                             int(date_split[2]))
+    sims = Simulation.query.filter(Simulation.launch_date > date).\
         filter(Simulation.launch_date <
-               launch_date + datetime.timedelta(days=1)).order_by(desc(Simulation.launch_date))
-    nav_locations, nav_sims = get_navigation_rows()
-    return render_template('view-sim.html', nav_locations=nav_locations, nav_sims=nav_sims, sims=sims)
+               date + datetime.timedelta(days=1)).order_by(desc(Simulation.launch_date))
+    return render_template('view-sim.html', sims=sims)
 
 
 @app.route('/view-sim/l/<site_id>')
 def view_sims_by_launch(site_id):
     sims = Simulation.query.filter_by(site_id=site_id).order_by(desc(Simulation.launch_date))
-    nav_locations, nav_sims = get_navigation_rows()
-    return render_template('view-sim.html', nav_locations=nav_locations, nav_sims=nav_sims, sims=sims)
+    return render_template('view-sim.html', sims=sims)
 
 
 @app.route('/kml/<id>')
@@ -210,13 +209,15 @@ def return_kml(id):
 @app.route('/run-sim')
 def auto_sim():
     start_date = datetime.date.today()+datetime.timedelta(days=1)
-    end_date = start_date + datetime.timedelta(hours=180)
-    while start_date < end_date:
+    end_date = datetime.datetime.now() + datetime.timedelta(hours=170)
+    sim_count = 0
+    while datetime.datetime.combine(start_date, datetime.time()) < end_date:
         r_value = run_simulation(start_date)
-        if r_value is not None:
+        if r_value is type(str):
             return r_value
+        sim_count += r_value
         start_date += datetime.timedelta(days=1)
-    return redirect(url_for('index'))
+    return '%s new simulations added' % sim_count
 
 
 @app.route('/landing-sites')
@@ -227,9 +228,14 @@ def landing_sites():
                                    Simulation.site_id).\
         join(Simulation, LandingSite.uuid == Simulation.uuid).\
         join(LaunchSite, Simulation.site_id == LaunchSite.id)
-    nav_locations, nav_sims = get_navigation_rows()
-    return render_template('landing-sites.html', nav_locations=nav_locations,
-                           nav_sims=nav_sims, landingsites=land_points)
+    lp_sub = land_points.subquery()
+    avgs = db.session.query(lp_sub.c.site_id.label('id'),
+                            func.avg(lp_sub.c.latitude).label('lat'),
+                           func.avg(lp_sub.c.longitude).label('long')).\
+        group_by(lp_sub.c.site_id)
+
+    return render_template('landing-sites.html',
+                           avgs=avgs, landingsites=land_points)
 
 
 if __name__ == '__main__':

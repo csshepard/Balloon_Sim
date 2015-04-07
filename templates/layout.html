@@ -13,8 +13,39 @@
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyBk_3hOHALHmbcsuYIibd17UfivgQArbXs"></script>
     <script>
-      {% block script %}
-      {% endblock %}
+      var httpRequest;
+      function runSim(url) {
+        document.getElementById('dim').style.visibility = 'visible';
+        if (window.XMLHttpRequest) { // Mozilla, Safari, ...
+          httpRequest = new XMLHttpRequest();
+        } else if (window.ActiveXObject) { // IE
+          try {
+            httpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+          }
+          catch (e) {
+            try {
+              httpRequest = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            catch (e) {}
+          }
+        }
+
+        if (!httpRequest) {
+          alert("Didn't Work");
+          return false;
+        }
+        httpRequest.onreadystatechange = alertDone;
+        httpRequest.open('GET', url);
+        httpRequest.send();
+      }
+
+      function alertDone() {
+        if (httpRequest.readyState === 4) {
+          alert(httpRequest.responseText);
+          document.getElementById('dim').style.visibility = 'hidden';
+        }
+      }
+      {% block script %} {% endblock %}
     </script>
   </head>
   <body>
@@ -43,10 +74,11 @@
 		  </ul></li>
         <li><a href="{{ url_for('view_all') }}">View All Simulations</a></li>
         <li><a href="{{ url_for('landing_sites') }}"> View Landing Sites</a></li></ul>
-	  <a href="{{ url_for('auto_sim') }}"><button type="button" onclick="alert('Running Simulations')">Run Simulations</button></a>
+	  <button id="runSim" type="button" onclick="runSim('/run-sim')">Run Simulations</button>
     </nav>
     <section>
       {% block body %}{% endblock %}
     </section>
+    <div id="dim"><img class="dim" src="{{ url_for('static', filename='radar.png') }}"></div>
   </body>
 </html>

@@ -14,7 +14,7 @@ import xml.etree.ElementTree as et
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
-app.debug = True
+
 
 class Simulation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -204,7 +204,8 @@ def view_sims_by_date(date):
                              int(date_split[2]))
     sims = Simulation.query.filter(Simulation.launch_date > date).\
         filter(Simulation.launch_date <
-               date + datetime.timedelta(days=1)).order_by(desc(Simulation.create_date)).\
+               date + datetime.timedelta(days=1)).\
+        order_by(desc(Simulation.create_date)).\
         order_by(Simulation.site_id)
     return render_template('view-sim.html', sims=sims)
 

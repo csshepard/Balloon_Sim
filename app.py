@@ -16,6 +16,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
 app.debug = True
 
+
 class Simulation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(50))
@@ -267,6 +268,7 @@ def change_globals():
             global_var.data['BURST_ALTITUDE'] = request.form['BURST_ALTITUDE']
         if request.form.get('DRAG_RATE'):
             global_var.data['DRAG_RATE'] = request.form['DRAG_RATE']
+        db.session.add(global_var)
         db.session.commit()
     return render_template('admin.html', globals=global_var.data)
 

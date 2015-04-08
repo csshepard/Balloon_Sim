@@ -220,7 +220,7 @@ def view_sims_by_launch(site_id):
     return render_template('view-sim.html', sims=sims)
 
 
-@app.route('/kml/<id>')
+@app.route('/kml/<sim_id>')
 def return_kml(sim_id):
     file = Simulation.query.filter_by(id=sim_id).first_or_404().kml_file
     return file

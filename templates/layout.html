@@ -31,7 +31,8 @@
         }
 
         if (!httpRequest) {
-          alert("Didn't Work");
+          alert("Simulation Failed");
+          document.getElementById('dim').style.visibility = 'hidden';
           return false;
         }
         httpRequest.onreadystatechange = alertDone;

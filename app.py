@@ -14,7 +14,7 @@ import xml.etree.ElementTree as et
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
-
+app.debug = True
 
 class Simulation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -141,7 +141,8 @@ def run_simulation(date):
                              global_var.data['DRAG_RATE'])
         if uuid_data['valid'] == 'true':
             if Simulation.query.filter_by(uuid=uuid_data['uuid']).\
-                    filter_by(create_date=datetime.date.today()).first() is None:
+                    filter_by(create_date=datetime.date.today()).\
+                    first() is None:
                 kml = get_kml(uuid_data['uuid'])
                 landing_site = get_landing_site(kml)
                 if landing_site is None:
@@ -164,10 +165,12 @@ def run_simulation(date):
 
 @app.context_processor
 def get_navigation_rows():
-    locations = db.session.query(LaunchSite.id, LaunchSite.name).distinct().order_by(LaunchSite.name)
+    locations = db.session.query(LaunchSite.id, LaunchSite.name).distinct().\
+        order_by(LaunchSite.name)
     ld = cast(Simulation.launch_date, db.Date)
     sims = db.session.query(ld).group_by(ld).order_by(desc(ld))
-    cd_sims = db.session.query(Simulation.create_date).distinct().order_by(desc(Simulation.create_date))
+    cd_sims = db.session.query(Simulation.create_date).distinct().\
+        order_by(desc(Simulation.create_date))
     return dict(nav_locations=locations, nav_sims=sims, cd_sims=cd_sims)
 
 
@@ -178,7 +181,10 @@ def index():
 
 @app.route('/view-all')
 def view_all():
-    sims = Simulation.query.order_by(Simulation.launch_date.desc())
+    sims = Simulation.query.filter(Simulation.launch_date >=
+                                   datetime.datetime.utcnow()).\
+        order_by(Simulation.launch_date.desc()).\
+        order_by(Simulation.site_id)
     return render_template('view-all.html', sims=sims)
 
 
@@ -210,13 +216,16 @@ def view_sims_by_create_date(date):
         date = datetime.date(int(date_split[0]), int(date_split[1]),
                              int(date_split[2]))
     sims = Simulation.query.filter(Simulation.create_date == date).\
+        filter(Simulation.launch_date >= datetime.datetime.utcnow()).\
         order_by(desc(Simulation.launch_date)).order_by(Simulation.site_id)
     return render_template('view-sim.html', sims=sims)
 
 
 @app.route('/view-sim/l/<site_id>')
 def view_sims_by_launch(site_id):
-    sims = Simulation.query.filter_by(site_id=site_id).order_by(desc(Simulation.launch_date))
+    sims = Simulation.query.filter_by(site_id=site_id).\
+        filter(Simulation.launch_date >= datetime.datetime.utcnow()).\
+        order_by(desc(Simulation.launch_date))
     return render_template('view-sim.html', sims=sims)
 
 
@@ -228,10 +237,10 @@ def return_kml(sim_id):
 
 @app.route('/run-sim')
 def auto_sim():
-    start_date = datetime.date.today()+datetime.timedelta(days=1)
-    end_date = datetime.datetime.now() + datetime.timedelta(hours=170)
+    start_date = datetime.datetime.utcnow()+datetime.timedelta(days=1)
+    end_date = datetime.datetime.utcnow() + datetime.timedelta(hours=180)
     sim_count = 0
-    while datetime.datetime.combine(start_date, datetime.time()) < end_date:
+    while start_date < end_date:
         r_value = run_simulation(start_date)
         if r_value is type(str):
             return r_value

@@ -32,9 +32,9 @@
       });
       ctaLayer{{sim.id}}.setMap(map{{sim.id}});
     {% endfor %}
+    preloader();
   }
   google.maps.event.addDomListener(window, 'load', initialize);
-  window.onload = preloader
 {% endblock %}
 {% block body %}
   <div id="loading"></div>

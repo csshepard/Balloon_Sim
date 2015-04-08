@@ -27,10 +27,10 @@
         center: new google.maps.LatLng({{sim.launch_site.latitude}}, {{sim.launch_site.longitude}})
       }
       var map{{sim.id}} = new google.maps.Map(document.getElementById('map-canvas{{sim.id}}'), mapOptions{{sim.id}});
-      var ctaLayer = new google.maps.KmlLayer({
+      var ctaLayer{{sim.id}} = new google.maps.KmlLayer({
         url: 'http://near-space-circus.heroku.com/kml/{{sim.id}}'
       });
-      ctaLayer.setMap(map{{sim.id}});
+      ctaLayer{{sim.id}}.setMap(map{{sim.id}});
     {% endfor %}
   }
   google.maps.event.addDomListener(window, 'load', initialize);
@@ -41,7 +41,7 @@
   <div id="content">
     {% for sim in sims %}
       <div id="map">
-        <h4>Simulation Created {{sim.create_date}} for {{sim.launch_site.name}} on {{sim.launch_date}} UTC Launch</h4>
+        <h4>Simulation Created on {{sim.create_date.strftime('%d %b, %Y')}} for {{sim.launch_site.name}} for {{ sim.launch_date.strftime('%d %b, %Y') }} UTC Launch</h4>
         <div id="map-canvas{{sim.id}}" style="height:300px; width:400px"></div>
       </div>
     {% endfor %}

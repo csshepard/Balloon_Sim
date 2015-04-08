@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+Use the form below to change input variables<br>
+<ul style="list-style: none;">
+    <li><b>Current values</b></li>
+    <li>Ascent Rate: {{ globals['ASCENT_RATE'] }}</li>
+    <li>Burst Altitude: {{ globals['BURST_ALTITUDE'] }}</li>
+    <li>Drag Rate: {{ globals['DRAG_RATE'] }}</li>
+</ul>
+<form id="globals" method="post">
+    <fieldset>
+        <legend>New Values for input variables</legend>
+        <ul style="list-style: none;">
+            <li>
+                <label for=AscentRate>Ascent Rate</label>
+                <input id=AscentRate name=ASCENT_RATE type=text>
+            </li>
+            <li>
+                <label for=BurstAltitude>Burst Altitude</label>
+                <input id=BurstAltitude name=BURST_ALTITUDE type=text>
+            </li>
+            <li>
+                <label for=DragRate>Drag Rate</label>
+                <input id=DragRate name=DRAG_RATE type=text>
+            </li>
+        </ul>
+    </fieldset>
+    <button type=submit style="margin: auto;">Submit</button>
+</form>
+{% endblock %}

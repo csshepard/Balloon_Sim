@@ -71,6 +71,13 @@
                 {% endfor %}
 			  </ul>
 		    </li>
+            <li><a href="#">Create Date</a>
+		      <ul>
+                {% for sim in cd_sims %}
+			    <li><a href="{{ url_for('view_sims_by_create_date', date = sim[0]) }}">{{ sim[0].strftime('%d %b, %Y') }}</a></li>
+                {% endfor %}
+			  </ul>
+		    </li>
 		  </ul></li>
         <li><a href="{{ url_for('view_all') }}">View All Simulations</a></li>
         <li><a href="{{ url_for('landing_sites') }}"> View Landing Sites</a></li></ul>

@@ -46,6 +46,10 @@
           document.getElementById('dim').style.visibility = 'hidden';
         }
       }
+      function preloader(){
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("content").style.display = "block";
+      }
       {% block script %} {% endblock %}
     </script>
   </head>
@@ -85,8 +89,12 @@
 	  <button id="runSim" type="button" onclick="runSim('/run-sim')">Run Simulations</button>
     </nav>
     <section>
-      {% block body %}{% endblock %}
+      <div id="loading"></div>
+      <div id="content">
+        {% block body %}{% endblock %}
+      </div>
     </section>
     <div id="dim"><img class="dim" src="{{ url_for('static', filename='radar.gif') }}"></div>
+    <script>preloader();</script>
   </body>
 </html>

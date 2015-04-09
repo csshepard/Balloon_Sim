@@ -124,3 +124,18 @@ div#dim{
     opacity: 1;
     filter: alpha(opacity=100);
 }
+
+div#content {
+    display: none;
+}
+
+div#loading {
+    top: 200 px;
+    margin: auto;
+    position: absolute;
+    z-index: 1000;
+    width: 160px;
+    height: 24px;
+    background: url("{{ url_for('static', filename = 'loadingimage.gif') }}") no-repeat;
+    cursor: wait;
+}

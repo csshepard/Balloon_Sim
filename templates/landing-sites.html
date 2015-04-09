@@ -15,6 +15,7 @@
         title: 'Launch Date: {{point.launch_date}} UTC'
       });
     {% endfor %}
+    preloader();
   }
   google.maps.event.addDomListener(window, 'load', initialize);
 {% endblock %}

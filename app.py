@@ -136,14 +136,15 @@ def run_simulation(date):
         if type(date) == str:
             date = datetime.datetime.strptime(date, '%Y-%m-%d')
         launch_datetime = get_sunrise(site, date)
-        uuid_data = get_uuid(site, launch_datetime,
-                             global_var.data['ASCENT_RATE'],
-                             global_var.data['BURST_ALTITUDE'],
-                             global_var.data['DRAG_RATE'])
-        if uuid_data['valid'] == 'true':
-            if Simulation.query.filter_by(uuid=uuid_data['uuid']).\
-                    filter_by(create_date=datetime.date.today()).\
-                    first() is None:
+        if Simulation.query.filter_by(launch_date=launch_datetime).\
+                filter_by(create_date=datetime.date.today()).\
+                filter_by(site_id=site_row.id).\
+                first() is None:
+            uuid_data = get_uuid(site, launch_datetime,
+                                 global_var.data['ASCENT_RATE'],
+                                 global_var.data['BURST_ALTITUDE'],
+                                 global_var.data['DRAG_RATE'])
+            if uuid_data['valid'] == 'true':
                 kml = get_kml(uuid_data['uuid'])
                 landing_site = get_landing_site(kml)
                 if landing_site is None:
@@ -158,9 +159,9 @@ def run_simulation(date):
                                      sim.id)
                 db.session.add(l_site)
                 sim_count += 1
-        else:
-            return uuid_data['error']
-    db.session.commit()
+            else:
+                return uuid_data['error']
+            db.session.commit()
     return sim_count
 
 
@@ -187,7 +188,7 @@ def view_all():
                                    datetime.datetime.utcnow()).\
         order_by(Simulation.launch_date.desc()).\
         order_by(Simulation.site_id)
-    return render_template('view-all.html', sims=sims)
+    return render_template('view-sim.html', sims=sims)
 
 
 @app.route('/run-sim/<date>')

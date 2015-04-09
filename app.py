@@ -14,6 +14,7 @@ import xml.etree.ElementTree as et
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 db = SQLAlchemy(app)
+app.debug = True
 
 
 class Simulation(db.Model):
@@ -79,7 +80,6 @@ pilot_mountain = Locale('Pilot Mtn', 'US',
                         36.340489, -80.480438,
                         'America/New_York', 673)
 LOCATIONS = [raylen, pilot_mountain]
-global_var = db.session.query(Settings).one()
 
 
 def get_sunrise(place, date):
@@ -130,6 +130,7 @@ def get_landing_site(kml):
 
 def run_simulation(date):
     sim_count = 0
+    global_var = db.session.query(Settings).one()
     for site in LOCATIONS:
         site_row = LaunchSite.query.filter_by(name=site.name).one()
         if type(date) == str:
@@ -176,6 +177,7 @@ def get_navigation_rows():
 
 @app.route('/')
 def index():
+    global_var = db.session.query(Settings).one()
     return render_template('index.html', globals=global_var.data)
 
 
@@ -270,6 +272,7 @@ def landing_sites():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def change_globals():
+    global_var = db.session.query(Settings).one()
     if request.method == 'POST':
         if request.form.get('ASCENT_RATE'):
             global_var.data['ASCENT_RATE'] = request.form['ASCENT_RATE']

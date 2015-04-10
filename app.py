@@ -152,16 +152,16 @@ def run_simulation(date):
                     continue
                 app.logger.debug('Landing coords string: %s', landing_site)
                 landing_coords = landing_site.split(',')
-                app.logger.debug('Landing coords split: %', landing_coords)
-                sim = Simulation(uuid_data['uuid'], site_row.id,
-                                 launch_datetime, datetime.date.today(), kml)
-                db.session.add(sim)
-                db.session.flush()
-                l_site = LandingSite(uuid_data['uuid'],
-                                     landing_coords[1], landing_coords[0],
-                                     sim.id)
-                db.session.add(l_site)
-                sim_count += 1
+                if landing_coords[0] != '' and landing_coords[1] != '':
+                    sim = Simulation(uuid_data['uuid'], site_row.id,
+                                     launch_datetime, datetime.date.today(), kml)
+                    db.session.add(sim)
+                    db.session.flush()
+                    l_site = LandingSite(uuid_data['uuid'],
+                                         landing_coords[1], landing_coords[0],
+                                         sim.id)
+                    db.session.add(l_site)
+                    sim_count += 1
             else:
                 return uuid_data['error']
             db.session.commit()

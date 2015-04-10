@@ -145,11 +145,14 @@ def run_simulation(date):
                                  global_var.data['BURST_ALTITUDE'],
                                  global_var.data['DRAG_RATE'])
             if uuid_data['valid'] == 'true':
+                app.logger.debug('UUID: %s' % uuid_data['uuid'])
                 kml = get_kml(uuid_data['uuid'])
                 landing_site = get_landing_site(kml)
                 if landing_site is None:
                     continue
+                app.logger.debug('Landing coords string: %s' % landing_site)
                 landing_coords = landing_site.split(',')
+                app.logger.debug('Landing coords split: %' % landing_coords)
                 sim = Simulation(uuid_data['uuid'], site_row.id,
                                  launch_datetime, datetime.date.today(), kml)
                 db.session.add(sim)

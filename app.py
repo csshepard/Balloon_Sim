@@ -70,6 +70,20 @@ class Settings(db.Model):
     data = db.Column(MutableDict.as_mutable(HSTORE))
 
 
+class Coordinate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    altitude = db.Column(db.Float)
+    timestamp = db.Column(db.DateTime)
+
+    def __init__(self, latitude, longitude, altitude, timestamp):
+        self.latitude = latitude
+        self.longitude = longitude
+        self.altitude = altitude
+        self.timestamp = timestamp
+
+
 Locale = namedtuple('Locale',
                     'name, region, latitude, longitude, tz_name, elevation')
 

@@ -4,6 +4,9 @@ import smtplib
 import os
 from sqlalchemy import desc
 from app import db, Coordinate
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def balloon_popped(coordinate):
@@ -31,25 +34,37 @@ def balloon_popped(coordinate):
 
 
 def get_coords():
-    callsign = 'NC4CAP-1'
-    ais = aprslib.IS(callsign, 'lga.aprs2.net', 14580)
+    callsign = 'BH1NIN-9'
+    ais = aprslib.IS(callsign=callsign, host='noam.aprs2.net', port=14580)
     ais.set_filter('p/%s' % callsign)
     ais.connect()
 
     def callback(packet):
+        print('------------\nPacket Recieved\n------------')
         if packet.get('latitude') and packet.get('longitude'):
             new_coord = Coordinate(timestamp=datetime.datetime.utcnow(),
-                                   latitude=packet.latitude,
-                                   longitude=packet.longitude,
+                                   latitude=packet['latitude'],
+                                   longitude=packet['longitude'],
                                    altitude=packet.get('altitude', 0))
-            latest = db.session.query(Coordinate).\
-                order_by(desc(Coordinate.timestamp)).latest()
-            if latest in None or (new_coord.latitude != latest.latitude and
-                                  new_coord.longitude != latest.longitude and
-                                  new_coord.timestamp > latest.timestamp):
+            latest_2 = db.session.query(Coordinate).\
+                order_by(desc(Coordinate.timestamp)).limit(2).all()
+            if len(latest_2) == 0 or \
+                    (new_coord.latitude != latest_2[0].latitude and
+                     new_coord.longitude != latest_2[0].longitude and
+                     new_coord.timestamp > latest_2[0].timestamp):
                 db.session.add(new_coord)
-                if (latest is not None and new_coord.altitude != 0 and
-                        new_coord.altitude < latest.altitude):
-                    balloon_popped(latest)
+                print('------------\nNew Coordinates\n------------')
+                if (len(latest_2) > 1 and
+                        latest_2[0].altitude >= latest_2[1] .altitude and
+                        new_coord.altitude != 0 and
+                        new_coord.altitude < latest_2[0].altitude):
+                    balloon_popped(latest_2[0])
                 db.session.commit()
     ais.consumer(callback)
+
+
+if __name__ == "__main__":
+    try:
+        get_coords()
+    except KeyboardInterrupt:
+        print('Quiting APRS Monitor')

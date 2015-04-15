@@ -1,7 +1,7 @@
 import os
 from astral import Location
 from collections import namedtuple
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import cast, desc, func
 from sqlalchemy.ext.mutable import MutableDict
@@ -82,6 +82,16 @@ class Coordinate(db.Model):
         self.longitude = longitude
         self.altitude = altitude
         self.timestamp = timestamp
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'altitude': self.altitude,
+            'timestamp': self.timestamp.strftime('%H:%M:%S')
+        }
 
 
 Locale = namedtuple('Locale',
@@ -301,6 +311,25 @@ def change_globals():
         db.session.add(global_var)
         db.session.commit()
     return render_template('admin.html', globals=global_var.data)
+
+
+@app.route('/get_coords')
+def get_coords():
+    get_all = request.args.get('all', False) == 'True'
+    coords = Coordinate.query.order_by(desc(Coordinate.timestamp))
+    if get_all:
+        coords = coords.all()
+    else:
+        coords = [coords.all()[-1]]
+    if coords[0] is not None:
+        return jsonify(coordinates=[i.serialize for i in coords])
+    else:
+        return jsonify()
+
+
+@app.route('/launch_day')
+def launch():
+    return render_template('launch_day.html')
 
 
 if __name__ == '__main__':

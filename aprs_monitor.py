@@ -34,7 +34,7 @@ def balloon_popped(coordinate):
 
 
 def get_coords():
-    callsign = 'BH1NIN-9'
+    callsign = 'ON7EQ-9'
     ais = aprslib.IS(callsign=callsign, host='noam.aprs2.net', port=14580)
     ais.set_filter('p/%s' % callsign)
     ais.connect()

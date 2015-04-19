@@ -23,17 +23,19 @@ class Simulation(db.Model):
     site_id = db.Column(db.Integer, db.ForeignKey('launch_site.id'))
     launch_date = db.Column(db.DateTime)
     create_date = db.Column(db.Date)
+    create_datetime = db.Column(db.DateTime)
     kml_file = db.Column(db.Text)
     landing_site = db.relationship('LandingSite',
                                    uselist=False,
                                    backref='simulation')
 
-    def __init__(self, uuid, site_id, launch_date, create_date, kml_file):
+    def __init__(self, uuid, site_id, launch_date, create_date, create_datetime, kml_file):
         self.uuid = uuid
         self.site_id = site_id
         self.launch_date = launch_date
         self.create_date = create_date
         self.kml_file = kml_file
+        self.create_datetime = create_datetime
 
 
 class LaunchSite(db.Model):
@@ -160,10 +162,16 @@ def run_simulation(date):
         if type(date) == str:
             date = datetime.datetime.strptime(date, '%Y-%m-%d')
         launch_datetime = get_sunrise(site, date)
-        if Simulation.query.filter_by(launch_date=launch_datetime).\
-                filter_by(create_date=datetime.date.today()).\
-                filter_by(site_id=site_row.id).\
-                first() is None:
+        if ((date.month == 4 and date.day == 21 and
+                db.session.query(Simulation.create_datetime).
+                filter(Simulation.launch_date == launch_datetime and
+                       Simulation.site_id == site_row.id).
+                order_by(desc(Simulation.create_datetime)).
+                first()[0] + datetime.timedelta(hours=1) <= datetime.datetime.utcnow()) or
+                Simulation.query.filter_by(launch_date=launch_datetime).
+                filter_by(create_date=datetime.date.today()).
+                filter_by(site_id=site_row.id).
+                first() is None):
             uuid_data = get_uuid(site, launch_datetime,
                                  global_var.data['ASCENT_RATE'],
                                  global_var.data['BURST_ALTITUDE'],
@@ -178,7 +186,8 @@ def run_simulation(date):
                 landing_coords = landing_site.split(',')
                 if landing_coords[0] != '' and landing_coords[1] != '':
                     sim = Simulation(uuid_data['uuid'], site_row.id,
-                                     launch_datetime, datetime.date.today(), kml)
+                                     launch_datetime, datetime.date.today(),
+                                     datetime.datetime.utcnow(), kml)
                     db.session.add(sim)
                     db.session.flush()
                     l_site = LandingSite(uuid_data['uuid'],
@@ -235,7 +244,7 @@ def view_sims_by_date(date):
     sims = Simulation.query.filter(Simulation.launch_date > date).\
         filter(Simulation.launch_date <
                date + datetime.timedelta(days=1)).\
-        order_by(desc(Simulation.create_date)).\
+        order_by(desc(Simulation.create_datetime)).\
         order_by(Simulation.site_id)
     return render_template('view-sim.html', sims=sims)
 
@@ -248,7 +257,8 @@ def view_sims_by_create_date(date):
                              int(date_split[2]))
     sims = Simulation.query.filter(Simulation.create_date == date).\
         filter(Simulation.launch_date >= datetime.datetime.utcnow()).\
-        order_by(desc(Simulation.launch_date)).order_by(Simulation.site_id)
+        order_by(desc(Simulation.launch_date)).order_by(Simulation.site_id).\
+        order_by(desc(Simulation.create_datetime))
     return render_template('view-sim.html', sims=sims)
 
 
@@ -256,7 +266,8 @@ def view_sims_by_create_date(date):
 def view_sims_by_launch(site_id):
     sims = Simulation.query.filter_by(site_id=site_id).\
         filter(Simulation.launch_date >= datetime.datetime.utcnow()).\
-        order_by(desc(Simulation.launch_date))
+        order_by(desc(Simulation.launch_date)).\
+        order_by(desc(Simulation.create_datetime))
     return render_template('view-sim.html', sims=sims)
 
 
@@ -317,14 +328,14 @@ def change_globals():
 def get_coords():
     get_all = request.args.get('all', False) == 'True'
     coords = Coordinate.query.order_by(desc(Coordinate.timestamp))
-    if get_all:
-        coords = coords.all()
-    else:
-        coords = [coords.all()[-1]]
-    if coords[0] is not None:
-        return jsonify(coordinates=[i.serialize for i in coords])
-    else:
-        return jsonify()
+    if coords.first() is not None:
+        if get_all:
+            coords = coords.all()
+        else:
+            coords = [coords.first()]
+        if coords[0] is not None:
+            return jsonify(coordinates=[i.serialize for i in coords])
+    return jsonify()
 
 
 @app.route('/launch_day')

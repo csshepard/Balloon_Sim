@@ -62,7 +62,18 @@
   google.maps.event.addDomListener(window, 'load', initialize);
 {% endblock %}
 {% block body %}
-    <div id="map">
-      <div id="map-canvas" style="height:300px; width:400px; z:index:-1; margin: 0 auto;"></div>
-    </div>
+<p>See below for live tracking the day of the launch</p>
+    <div id="map-canvas" style="height:500px; width:600px; z:index:-1; margin: 0 auto;"></div>
+    <div id="awidget"></div>
+<script type="text/javascript" src="//d3ra5e5xmvzawh.cloudfront.net/live-widget/2.0/spot-main-min.js"></script>
+<script type="text/javascript">
+	$(function() {
+		$('#widget').spotLiveWidget({
+			feedId: '<SHARE_PAGE_FEED_ID>',
+			mapType: 'HYBRID'
+		});
+
+	});
+</script>
+
 {% endblock %}

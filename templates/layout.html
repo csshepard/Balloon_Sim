@@ -12,7 +12,16 @@
       {% endblock %}
     </style>
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyBk_3hOHALHmbcsuYIibd17UfivgQArbXs"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='jquery.countdown.min.js') }}"></script>
     <script>
+      $(function(){
+        $(".countdown").countdown({
+          image: "{{ url_for('static', filename='digits.png') }}",
+          format: "dd:hh:mm:ss",
+          endTime: new Date(1429612800000)
+        })
+      })
       var httpRequest;
       function runSim(url) {
         document.getElementById('dim').style.visibility = 'visible';
@@ -55,6 +64,7 @@
   </head>
   <body>
     <header>
+      <div class="countdown" style="float: right;"></div>
       <h1>Near Space Circus Simulations</h1>
     </header>
     <nav>

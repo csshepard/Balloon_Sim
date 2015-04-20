@@ -4,96 +4,23 @@ from collections import namedtuple
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import cast, desc, func
-from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy.dialects.postgresql import HSTORE
+from celery import Celery
+import aprslib
 import datetime
 import requests
 import xml.etree.ElementTree as et
+import smtplib
+from twitter import *
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+app.config.from_object(os.environ['APP_SETTINGS'])
 db = SQLAlchemy(app)
-app.debug = True
 
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
-class Simulation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(50))
-    site_id = db.Column(db.Integer, db.ForeignKey('launch_site.id'))
-    launch_date = db.Column(db.DateTime)
-    create_date = db.Column(db.Date)
-    create_datetime = db.Column(db.DateTime)
-    kml_file = db.Column(db.Text)
-    landing_site = db.relationship('LandingSite',
-                                   uselist=False,
-                                   backref='simulation')
-
-    def __init__(self, uuid, site_id, launch_date, create_date, create_datetime, kml_file):
-        self.uuid = uuid
-        self.site_id = site_id
-        self.launch_date = launch_date
-        self.create_date = create_date
-        self.kml_file = kml_file
-        self.create_datetime = create_datetime
-
-
-class LaunchSite(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    elevation = db.Column(db.Integer)
-    simulations = db.relationship('Simulation', backref='launch_site')
-
-    def __init__(self, name, latitude, longitude, elevation):
-        self.name = name
-        self.latitude = latitude
-        self.longitude = longitude
-        self.elevation = elevation
-
-
-class LandingSite(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(50))
-    sim_id = db.Column(db.Integer, db.ForeignKey('simulation.id'))
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-
-    def __init__(self, uuid, latitude, longitude, sim_id):
-        self.uuid = uuid
-        self.latitude = latitude
-        self.longitude = longitude
-        self.sim_id = sim_id
-
-
-class Settings(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(MutableDict.as_mutable(HSTORE))
-
-
-class Coordinate(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    altitude = db.Column(db.Float)
-    timestamp = db.Column(db.DateTime)
-
-    def __init__(self, latitude, longitude, altitude, timestamp):
-        self.latitude = latitude
-        self.longitude = longitude
-        self.altitude = altitude
-        self.timestamp = timestamp
-
-    @property
-    def serialize(self):
-        return {
-            'id': self.id,
-            'latitude': self.latitude,
-            'longitude': self.longitude,
-            'altitude': self.altitude,
-            'timestamp': self.timestamp.strftime('%H:%M:%S')
-        }
+from models import *
 
 
 Locale = namedtuple('Locale',
@@ -106,6 +33,115 @@ pilot_mountain = Locale('Pilot Mtn', 'US',
                         36.340489, -80.480438,
                         'America/New_York', 673)
 LOCATIONS = [raylen, pilot_mountain]
+
+twit = Twitter(auth=OAuth(os.environ['TWITTER_TOKEN'],
+                          os.environ['TWITTER_TOKEN_SECRET'],
+                          os.environ['TWITTER_CONSUMER'],
+                          os.environ['TWITTER_CONSUMER_SECRET']))
+twitter_message = "Payload Location: Latitude: {lat:.5} Longitude: {lng:.5} " \
+                  "Altitude: {alt:.5} http://bit.ly/1IvyO0E #GSBChallenge #NSC01"
+
+
+def balloon_launched(coordinate):
+    twit.statuses.update(status='  '.join(["up, up, and away.",
+                                          "The payload is on it's way to near space.",
+                                          "http://bit.ly/1IvyO0E",
+                                          ]))
+    coordinate.noteworthy = "Balloon Launched"
+    return coordinate
+
+
+def balloon_popped(coordinate):
+    twit.statuses.update(status='  '.join(["Here it comes.",
+                                           "The balloon popped."]))
+    time_format = '%I:%M:%S'
+    msg = '\r\n'.join([
+        'From: csshepard@gmail.com',
+        'To: csshepard@gmail.com',
+        'Subject: Balloon Popped',
+        '',
+        'The balloon popped at {time}\n'
+        'It was located at longitude {long}, latitude {lat}, altitude {alt}'.
+        format(time=coordinate.timestamp.strftime(time_format),
+               lat=coordinate.latitude,
+               long=coordinate.longitude,
+               alt=float(coordinate.altitude))])
+    fromaddr = 'csshepard@gmail.com'
+    toaddr = 'csshepard@gmail.com'
+    username = 'csshepard@gmail.com'
+    password = os.environ['GPSWD']
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.ehlo()
+    server.starttls()
+    server.login(username, password)
+    server.sendmail(fromaddr, toaddr, msg)
+    server.quit()
+    coordinate.noteworthy = "Balloon Popped"
+    return coordinate
+
+
+def callback(packet):
+    if packet.get('latitude') and packet.get('longitude'):
+        new_coord = Coordinate(timestamp=datetime.datetime.utcnow(),
+                               latitude=packet['latitude'],
+                               longitude=packet['longitude'],
+                               altitude=packet.get('altitude', 0))
+        latest_2 = db.session.query(Coordinate).\
+            order_by(desc(Coordinate.timestamp)).limit(2).all()
+        if len(latest_2) == 0 or \
+                (new_coord.latitude != latest_2[0].latitude and
+                 new_coord.longitude != latest_2[0].longitude and
+                 new_coord.timestamp > latest_2[0].timestamp):
+            if len(latest_2) == 0:
+                new_coord = balloon_launched(new_coord)
+            elif (len(latest_2) > 1 and
+                    latest_2[0].altitude >= latest_2[1] .altitude and
+                    new_coord.altitude != 0 and
+                    new_coord.altitude < latest_2[0].altitude):
+                latest_2[0] = balloon_popped(latest_2[0])
+                db.session.add(latest_2[0])
+            twit.statuses.update(status=twitter_message.
+                                 format(lat=new_coord.latitude,
+                                        lng=new_coord.longitude,
+                                        alt=float(new_coord.altitude)))
+            db.session.add(new_coord)
+            db.session.commit()
+
+
+def get_position(callsign):
+    ais = aprslib.IS(callsign=callsign, host='noam.aprs2.net', port=14580)
+    ais.set_filter('p/%s' % callsign)
+    ais.connect()
+    ais.consumer(callback=callback, immortal=True)
+
+
+@celery.task(bind=True)
+def aprs_listen(self):
+    try:
+        global_var = db.session.query(Settings).one()
+        callsign = global_var.data.get('CALLSIGN', 'N4CAP-1')
+        msg = '\r\n'.join([
+            'From: csshepard@gmail.com',
+            'To: csshepard@gmail.com',
+            'Subject: listening to aprs',
+            '',
+            'listening to aprs'])
+        fromaddr = 'csshepard@gmail.com'
+        toaddr = 'csshepard@gmail.com'
+        username = 'csshepard@gmail.com'
+        password = os.environ['GPSWD']
+        server = smtplib.SMTP('smtp.gmail.com:587')
+        server.ehlo()
+        server.starttls()
+        server.login(username, password)
+        server.sendmail(fromaddr, toaddr, msg)
+        server.quit()
+        get_position(callsign)
+    except (TwitterHTTPError, smtplib.SMTPException) as exc:
+        self.retry(exc=exc)
+
+
+aprs_listen.delay()
 
 
 def get_sunrise(place, date):
@@ -319,30 +355,31 @@ def change_globals():
             global_var.data['BURST_ALTITUDE'] = request.form['BURST_ALTITUDE']
         if request.form.get('DRAG_RATE'):
             global_var.data['DRAG_RATE'] = request.form['DRAG_RATE']
+        if request.form.get('CALLSIGN'):
+            global_var.data['CALLSIGN'] = request.form['CALLSIGN']
         db.session.add(global_var)
         db.session.commit()
     return render_template('admin.html', globals=global_var.data)
 
 
-@app.route('/get_coords')
+@app.route('/api/get_coords')
 def get_coords():
     get_all = request.args.get('all', False) == 'True'
-    coords = Coordinate.query.order_by(desc(Coordinate.timestamp))
+    coords = Coordinate.query.order_by(Coordinate.timestamp)
     if coords.first() is not None:
         if get_all:
             coords = coords.all()
         else:
-            coords = [coords.first()]
+            coords = [coords.all()[-1]]
         if coords[0] is not None:
             return jsonify(coordinates=[i.serialize for i in coords])
     return jsonify()
 
 
 @app.route('/launch_day')
-def launch():
+def launch_day():
     return render_template('launch_day.html')
 
 
 if __name__ == '__main__':
-    app.debug = True
     app.run()

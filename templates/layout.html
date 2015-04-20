@@ -65,7 +65,7 @@
   <body>
     <header>
       <div class="countdown" style="float: right;"></div>
-      <h1>Near Space Circus Simulations</h1>
+        <h1>Near Space Circus</h1>
     </header>
     <nav>
       <ul>
@@ -95,7 +95,8 @@
 		    </li>
 		  </ul></li>
         <li><a href="{{ url_for('view_all') }}">View All Simulations</a></li>
-        <li><a href="{{ url_for('landing_sites') }}"> View Landing Sites</a></li></ul>
+        <li><a href="{{ url_for('landing_sites') }}"> View Landing Sites</a></li>
+        <li><a href="{{ url_for('launch_day') }}">Launch Day Tracking</a></li></ul>
 	  <button id="runSim" type="button" onclick="runSim('/run-sim')">Run Simulations</button>
     </nav>
     <section>

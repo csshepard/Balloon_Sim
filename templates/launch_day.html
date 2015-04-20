@@ -2,6 +2,7 @@
 {% block script %}
   var Request = new XMLHttpRequest();
   var flightPath;
+  var currentPosition;
   function initialize() {
     var mapOptions = {
     zoom: 6,
@@ -26,6 +27,13 @@
         var coords = JSON.parse(Request.responseText)
         for (a=0; a<coords.coordinates.length; a++) {
           flightPathCoordinates.push(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude))
+          if (coords.coordinates[a].noteworthy != null) {
+            marker = new google.maps.Marker({
+                position: new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude),
+                map: map,
+                title: coords.coordinates[a].noteworthy
+            })
+          }
         }
         flightPath = new google.maps.Polyline({
           path: flightPathCoordinates,
@@ -34,6 +42,12 @@
           strokeOpacity: 1.0,
           strokeWeight: 2
         })
+        last = coords.coordinates.length - 1
+        currentPosition = new google.maps.Marker({
+            position: new google.maps.LatLng(coords.coordinates[last].latitude, coords.coordinates[last].longitude),
+            map: map,
+            title: "Current Position"
+        });
         flightPath.setMap(map)
       }
     }
@@ -50,6 +64,15 @@
         var coords = JSON.parse(Request.responseText);
         for (a=0; a<coords.coordinates.length; a++) {
           path.push(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude))
+          if (coords.coordinates[a].noteworthy != null) {
+            marker = new google.maps.Marker({
+                position: new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude),
+                map: map,
+                title: coords.coordinates[a].noteworthy
+            })
+          }
+          currentPosition.setPosition(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude))
+          map.panTo(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude))
         }
       }
     }
@@ -64,6 +87,14 @@
 {% block body %}
 <p>See below for live tracking the day of the launch</p>
     <div id="map-canvas" style="height:500px; width:600px; z:index:-1; margin: 0 auto;"></div>
+	<div style="height:500px; width:600px; z:index:-1; margin: 0 auto;">
+	<script type="text/javascript">
+	he_track = "N4CAP-1"; // track this callsign
+	</script>
+	<script type="text/javascript" src="http://aprs.fi/js/embed.js">
+	</script>
+	</div>
+
     <div id="awidget"></div>
 <script type="text/javascript" src="//d3ra5e5xmvzawh.cloudfront.net/live-widget/2.0/spot-main-min.js"></script>
 <script type="text/javascript">

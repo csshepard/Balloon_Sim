@@ -6,9 +6,10 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     SECRET_KEY = "change-me"
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://localhost/nscdb')
-    CELERY_BROKER_URL = os.environ['CLOUDAMQP_URL']
-    CELERY_RESULT_BACKEND = os.environ['CLOUDAMQP_URL']
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://csshepard:Married2Rene!@localhost/nscdb')
+    CELERY_BROKER_URL = os.getenv('CLOUDAMQP_URL', 'amqp://guest@localhost')
+    CELERY_RESULT_BACKEND = os.getenv('CLOUDAMQP_URL', 'amqp://guest@localhost')
+    CELERY_TASK_SERIALIZER = 'json'
 
 
 class ProductionConfig(Config):

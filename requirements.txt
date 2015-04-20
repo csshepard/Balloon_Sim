@@ -17,7 +17,6 @@ Mako==1.0.1
 MarkupSafe==0.23
 psycopg2==2.6
 pytz==2015.2
-redis==2.10.3
 requests==2.6.0
 SQLAlchemy==0.9.9
 twitter==1.16.0

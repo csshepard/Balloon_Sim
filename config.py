@@ -7,8 +7,8 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = "change-me"
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://localhost/nscdb')
-    CELERY_BROKER_URL = os.getenv('REDISTOGO_URL', 'redis://localhost:6379/0')
-    CELERY_RESULT_BACKEND = os.getenv('REDISTOGO_URL', 'redis://localhost:6379/0')
+    CELERY_BROKER_URL = os.environ['CLOUDAMQP_URL']
+    CELERY_RESULT_BACKEND = os.environ['CLOUDAMQP_URL']
 
 
 class ProductionConfig(Config):

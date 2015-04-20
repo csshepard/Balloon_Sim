@@ -119,7 +119,7 @@ def get_position(callsign):
 def aprs_listen(self):
     try:
         global_var = db.session.query(Settings).one()
-        callsign = global_var.data.get('CALLSIGN', 'N4CAP-1')
+        callsign = global_var.data.get('CALLSIGN', 'N4CAP-11')
         msg = '\r\n'.join([
             'From: csshepard@gmail.com',
             'To: csshepard@gmail.com',

@@ -13,7 +13,7 @@
 
     getPath();
     preloader();
-    setInterval(addPointLoop, 15000)
+    setInterval(addPointLoop, 15000);
 
     function getPath() {
         console.log('getPath');
@@ -25,15 +25,15 @@
     function addPath() {
       if (Request.readyState == 4) {
         var flightPathCoordinates = [];
-        var coords = JSON.parse(Request.responseText)
+        var coords = JSON.parse(Request.responseText);
         for (a=0; a<coords.coordinates.length; a++) {
-          flightPathCoordinates.push(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude))
+          flightPathCoordinates.push(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude));
           if (coords.coordinates[a].noteworthy != null) {
             marker = new google.maps.Marker({
                 position: new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude),
                 map: map,
                 title: coords.coordinates[a].noteworthy + ' at ' + coords.coordinates[a].timestamp + 'UTC'
-            })
+            });
           }
         }
         flightPath = new google.maps.Polyline({
@@ -42,8 +42,8 @@
           strokeColor: '#FF0000',
           strokeOpacity: 1.0,
           strokeWeight: 2
-        })
-        last = coords.coordinates.length - 1
+        });
+        last = coords.coordinates.length - 1;
         currentPosition = new google.maps.Marker({
             position: new google.maps.LatLng(coords.coordinates[last].latitude, coords.coordinates[last].longitude),
             map: map,
@@ -63,18 +63,18 @@
       if (Request.readyState == 4) {
         var path = flightPath.getPath();
         var coords = JSON.parse(Request.responseText);
-        pos = new google.maps.LatLng(coords.coordinates[0].latitude, coords.coordinates[0].longitude)
+        pos = new google.maps.LatLng(coords.coordinates[0].latitude, coords.coordinates[0].longitude);
         if currentPosition.GetPosition() != pos {
-          path.push(pos)
+          path.push(pos);
           if (coords.coordinates[0].noteworthy != null) {
             marker = new google.maps.Marker({
                 position: new google.maps.LatLng(pos),
                 map: map,
                 title: coords.coordinates[0].noteworthy + ' at ' + coords.coordinates[a].timestamp + 'UTC'
-            })
+            });
           }
-          currentPosition.setPosition(pos)
-          map.panTo(new google.maps.LatLng(pos)
+          currentPosition.setPosition(pos);
+          map.panTo(new google.maps.LatLng(pos);
         }
       }
     }

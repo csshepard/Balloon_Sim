@@ -43,7 +43,7 @@ twitter_message = "Payload Location: Latitude: {lat:.5} Longitude: {lng:.5} " \
 
 
 def balloon_launched(coordinate):
-    twit.statuses.update(status='  '.join(["up, up, and away.",
+    twit.statuses.update(status='  '.join(["Up, up, and away.",
                                           "The payload is on it's way to near space.",
                                           "http://bit.ly/1IvyO0E",
                                           ]))

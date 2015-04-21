@@ -5,8 +5,9 @@
   var currentPosition;
   function initialize() {
     var mapOptions = {
-    zoom: 6,
-    center: new google.maps.LatLng(36.807113, -79.190529)
+    zoom: 10,
+    center: new google.maps.LatLng(36.807113, -79.190529),
+    mapTypeId: google.maps.MapTypeId.HYBRID
     }
     var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
@@ -31,7 +32,7 @@
             marker = new google.maps.Marker({
                 position: new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude),
                 map: map,
-                title: coords.coordinates[a].noteworthy
+                title: coords.coordinates[a].noteworthy + ' at ' + coords.coordinates[a].timestamp + 'UTC'
             })
           }
         }
@@ -48,11 +49,11 @@
             map: map,
             title: "Current Position"
         });
-        flightPath.setMap(map)
+        flightPath.setMap(map);
+        map.panTo(new google.maps.LatLng(coords.coordinates[last].latitude, coords.coordinates[last].longitude));
       }
     }
     function addPointLoop() {
-      console.log('LOOPING');
       Request.onreadystatechange = addPoint;
       Request.open('GET', '{{ url_for('get_coords') }}');
       Request.send();
@@ -62,17 +63,18 @@
       if (Request.readyState == 4) {
         var path = flightPath.getPath();
         var coords = JSON.parse(Request.responseText);
-        for (a=0; a<coords.coordinates.length; a++) {
-          path.push(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude))
-          if (coords.coordinates[a].noteworthy != null) {
+        pos = new google.maps.LatLng(coords.coordinates[0].latitude, coords.coordinates[0].longitude)
+        if currentPosition.GetPosition() != pos {
+          path.push(pos)
+          if (coords.coordinates[0].noteworthy != null) {
             marker = new google.maps.Marker({
-                position: new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude),
+                position: new google.maps.LatLng(pos),
                 map: map,
-                title: coords.coordinates[a].noteworthy
+                title: coords.coordinates[0].noteworthy + ' at ' + coords.coordinates[a].timestamp + 'UTC'
             })
           }
-          currentPosition.setPosition(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude))
-          map.panTo(new google.maps.LatLng(coords.coordinates[a].latitude, coords.coordinates[a].longitude))
+          currentPosition.setPosition(pos)
+          map.panTo(new google.maps.LatLng(pos)
         }
       }
     }
@@ -85,19 +87,24 @@
   google.maps.event.addDomListener(window, 'load', initialize);
 {% endblock %}
 {% block body %}
-<p>See below for live tracking the day of the launch</p>
-    <div id="map-canvas" style="height:500px; width:600px; z:index:-1; margin: 0 auto;"></div>
-	<div style="height:500px; width:600px; z:index:-1; margin: 0 auto;">
+  <p>See below for live tracking the day of the launch.  No need to reload page.  Maps will update automatically.</p>
+  <h3>Live updates from APRS Transmitter</h3>
+  <div id="map-canvas" style="height:500px; width:600px; z:index:-1;"></div>
+  <h3>Map courtesy <a href="aprs.fi/#!call=a%2FN4CAP-11">aprs.fi.</a></h3>
+  <div style="height:500px; width:600px; z:index:-1;">
 	<script type="text/javascript">
-	he_track = "N4CAP-11"; // track this callsign
+	  he_track = "N4CAP-11"; // track this callsign
+	  he_width = 600;
+	  he_height = 500;
+	  he_maptype = 'h';
+	  he_zoom = 10;
 	</script>
-	<script type="text/javascript" src="http://aprs.fi/js/embed.js">
-	</script>
-	</div>
-
-    <div id="widget"></div>
-<script type="text/javascript" src="//d3ra5e5xmvzawh.cloudfront.net/live-widget/2.0/spot-main-min.js"></script>
-<script type="text/javascript">
+	<script type="text/javascript" src="http://aprs.fi/js/embed.js"></script>
+  </div>
+  <h3>GPS Tracker</h3>
+  <div id="widget" style="height:500px; width:600px; z:index:-1;"></div>
+  <script type="text/javascript" src="//d3ra5e5xmvzawh.cloudfront.net/live-widget/2.0/spot-main-min.js"></script>
+  <script type="text/javascript">
 	$(function() {
 		$('#widget').spotLiveWidget({
 			feedId: '0idvSjJkFWabudE2RfoTxMTyn8On56zMX',
@@ -107,6 +114,5 @@
 		});
 
 	});
-</script>
-
+  </script>
 {% endblock %}

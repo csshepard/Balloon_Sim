@@ -43,18 +43,19 @@ twitter_message = "Payload Location: Latitude: {lat:.5} Longitude: {lng:.5} " \
 
 
 def balloon_launched(coordinate):
-    twit.statuses.update(status='  '.join(["Up, up, and away.",
-                                          "The payload is on it's way to near space.",
-                                          "http://bit.ly/1IvyO0E",
-                                          ]))
+    #twit.statuses.update(status='  '.join(["Up, up, and away.",
+    #                                      "The payload is on it's way to near space.",
+    #                                      "http://bit.ly/1IvyO0E #GSBChallenge #NSC01",
+    #                                      ]))
     coordinate.noteworthy = "Balloon Launched"
     return coordinate
 
 
 def balloon_popped(coordinate):
-    twit.statuses.update(status='  '.join(["Here it comes.",
-                                           "The balloon popped."]))
-    time_format = '%I:%M:%S'
+    #twit.statuses.update(status='  '.join(["Here it comes.",
+    #                                       "The balloon popped.",
+    #                                       "http://bit.ly/1IvyO0 #GSBChallenge #NSC01"]))
+    time_format = '%H:%M:%S'
     msg = '\r\n'.join([
         'From: csshepard@gmail.com',
         'To: csshepard@gmail.com',
@@ -92,7 +93,8 @@ def callback(packet):
                 (new_coord.latitude != latest_2[0].latitude and
                  new_coord.longitude != latest_2[0].longitude and
                  new_coord.timestamp > latest_2[0].timestamp):
-            if len(latest_2) == 0:
+            if (len(latest_2) > 0 and
+                            latest_2[0].altitude < 300 >= new_coord.altitude):
                 new_coord = balloon_launched(new_coord)
             elif (len(latest_2) > 1 and
                     latest_2[0].altitude >= latest_2[1] .altitude and
@@ -100,10 +102,10 @@ def callback(packet):
                     new_coord.altitude < latest_2[0].altitude):
                 latest_2[0] = balloon_popped(latest_2[0])
                 db.session.add(latest_2[0])
-            twit.statuses.update(status=twitter_message.
-                                 format(lat=new_coord.latitude,
-                                        lng=new_coord.longitude,
-                                        alt=float(new_coord.altitude)))
+            #twit.statuses.update(status=twitter_message.
+            #                     format(lat=new_coord.latitude,
+            #                            lng=new_coord.longitude,
+            #                            alt=float(new_coord.altitude)))
             db.session.add(new_coord)
             db.session.commit()
 

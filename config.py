@@ -10,7 +10,8 @@ class Config(object):
     CELERY_BROKER_URL = os.getenv('CLOUDAMQP_URL', 'amqp://guest@localhost')
     CELERY_RESULT_BACKEND = os.getenv('CLOUDAMQP_URL', 'amqp://guest@localhost')
     CELERY_TASK_SERIALIZER = 'json'
-    CELERY_BROKER_POOL_LIMIT = 1
+    CELERY_ACCEPT_CONTENT = ['json']
+    BROKER_POOL_LIMIT = 1
 
 class ProductionConfig(Config):
     DEBUG = False

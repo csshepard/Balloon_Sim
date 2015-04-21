@@ -64,7 +64,7 @@
         var path = flightPath.getPath();
         var coords = JSON.parse(Request.responseText);
         pos = new google.maps.LatLng(coords.coordinates[0].latitude, coords.coordinates[0].longitude);
-        if currentPosition.GetPosition() != pos {
+        if (currentPosition.GetPosition() != pos) {
           path.push(pos);
           if (coords.coordinates[0].noteworthy != null) {
             marker = new google.maps.Marker({

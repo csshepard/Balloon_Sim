@@ -6,14 +6,14 @@
   function initialize() {
     var mapOptions = {
     zoom: 10,
-    center: new google.maps.LatLng(36.807113, -79.190529),
+    center: new google.maps.LatLng(35.970950, -80.505930),
     mapTypeId: google.maps.MapTypeId.HYBRID
     }
     var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
     getPath();
     preloader();
-    setInterval(addPointLoop, 15000);
+    setInterval(addPointLoop, 90000);
 
     function getPath() {
         console.log('getPath');

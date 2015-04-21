@@ -83,4 +83,3 @@ class Coordinate(db.Model):
             'timestamp': self.timestamp.strftime('%H:%M:%S'),
             'noteworthy': self.noteworthy
         }
-
